@@ -1,0 +1,22 @@
+# Tiingo (licensed; local only - docs/licenses/tiingo-reply-2026-10-20.md)
+data/raw/tiingo/
+data/local_only/
+.env
+# see docs/setup-checklist.md for the full spec
+data/raw/
+data/cache/
+# analysis outputs join Tiingo returns: local only
+data/processed/analysis_set.csv
+data/processed/analysis_table.parquet
+data/processed/analysis_views/
+data/processed/analysis_views_meta.csv
+data/processed/market_cap.csv
+# local-only verification records and SEC-derived universe/worksheets
+verify/
+data/universe/
+__pycache__/
+.ipynb_checkpoints/
+*.xlsx
+docs/licenses/tiingo-reply*
+data/processed/views/
+data/processed/views_2024/

@@ -1,0 +1,88 @@
+# Price-source terms-of-service survey (Oct 20, 2026)
+
+**Question:** is there any source whose terms allow **automated collection** of US daily closing prices **and** **publishing derived results** (e.g. sector median IPO returns on GitHub)?
+
+**Method:** read-only. I fetched only terms pages and robots.txt files, and no quote or price pages. Raw copies are in `verify/tos/` (HTML, PDF, `robots_*.txt`). Quotes are verbatim from the pages listed. "Not loaded" means the page failed (404, 403 or timeout) and its terms are **unverified**. A few clauses came from search-engine extracts of the primary page; they're marked [search extract].
+
+**Verdict key:**
+- **ALLOWED:** automation and publishing derived results both explicitly permitted.
+- **ALLOWED WITH CONDITIONS:** permitted only under stated conditions (e.g. a paid plan, or aggregates only).
+- **BANNED:** automated access or publishing derived results is prohibited.
+- **UNCLEAR:** the terms don't address it, or the page didn't load.
+
+## Bottom line
+- **No source is fully ALLOWED for free.** Every free website bans automated collection. Every free API is either silent on publishing derived results, or bans it.
+- **Only Tiingo explicitly permits publishing derived results** (percentage returns and aggregate statistics that can't be reversed into prices), **and only on a paid plan**. Its free Starter plan bans persistent storage.
+- **Twelve Data's** license lets you "Create Derived Data that cannot be reverse-engineered", but it doesn't say whether that derived data can be published. UNCLEAR.
+- **Alpha Vantage, Alpaca and Marketstack** are silent or require written consent, so they're UNCLEAR. A written OK would settle it.
+
+## Ranked viable options
+1. **Tiingo, paid plan:** ALLOWED WITH CONDITIONS. Publish only aggregate statistics; per-IPO returns stay local. The plan price is unverified because the pricing page needs JavaScript.
+2. **Alpha Vantage, free key plus written permission:** UNCLEAR until they reply. Free: "25 API requests per day", and "unlimited… for verified open-source or educational projects."
+3. **Twelve Data:** UNCLEAR, leaning permissive for non-reversible derived data. Ask in writing. Free-tier limits unverified.
+4. **Alpaca, free Basic account:** UNCLEAR. Raw content can't be republished "without Alpaca's express prior written consent". Derived results aren't addressed. It requires opening an Alpaca account (a brokerage). Free historical data: IEX feed, plus "data older than 15 minutes is accessible on all feeds" (alpaca.markets/learn/fetch-historical-data).
+
+Everything else below is BANNED or not usable.
+
+---
+
+## A. Websites (none permit scraping)
+
+| # | Source and terms URL | Automated access | Storage | Redistribution / derived | robots.txt (relevant) | Verdict |
+|---|---|---|---|---|---|---|
+| 1 | **Google Finance**: https://www.google.com/googlefinance/disclaimer/ and https://policies.google.com/terms | Google ToS bans "using automated means to access content from any of our services in violation of the machine-readable instructions on our web pages (for example, robots.txt files…)" | Disclaimer: "You agree not to copy, modify, reformat, download, store, reproduce, reprocess, transmit or redistribute any data or information found herein… without obtaining prior written consent." | Same clause, plus for NYSE data: "Any redistribution of such information is strictly prohibited." | `User-agent: *` disallows include `/trends/api`, `/maps/api/...`. A finance-path line wasn't in my excerpt, but the disclaimer already bans download and storage | **BANNED** |
+| 2 | **MarketWatch, WSJ and Barron's (Dow Jones)**: https://www.dowjones.com/terms-of-use/ (the page names MarketWatch, WSJ and Barron's) | 9.4.1: "You agree not to rearrange, modify, display, post, frame, scrape, aggregate, or otherwise use the Content… in a manner that could reasonably serve as, or generate, a substitute…" Also, you may not use downloaded content "for text or data mining" | 9.3: "You may occasionally download, print and/or store articles… for your individual, personal, and non-commercial use" | 9.1: "for your individual, personal and non-commercial use only" | marketwatch.com and wsj.com: `User-agent: *` / `Disallow: /`, plus "Collection of content and other data… through automated means is prohibited unless you have express written permission from Dow Jones" | **BANNED** |
+| 3 | **A secondary public IPO/price aggregator** (name withheld) | Terms restrict bots, scripts and other automated collection, with limited exceptions | not stated | Full republication not allowed without permission | Limited disallows | **BANNED** for a price pipeline |
+| 4 | **Investing.com**: https://www.investing.com/about-us/terms-and-conditions | — | "It is prohibited to use, store, reproduce, display, modify, transmit or distribute the data contained in this website without the explicit prior written permission of Fusion Media and/or the data provider." | same | Disallows include `/charts_xml`, `/indices/*?page=chart`, `/pro/screener/q/` | **BANNED** |
+| 5 | **Macrotrends**: https://www.macrotrends.net/stocks/terms [search extract; the direct fetch returned 403] | "use bots, scrapers, spiders, crawlers, automated scripts, or other automated means to access, extract, or download Content or data" (prohibited) | — | "copy, redistribute, transmit, sell, sublicense, publish… except as expressly permitted" (prohibited). Also bans using it "to develop… competing products, datasets…" | Disallows `/stock-comparison` | **BANNED** |
+| 6 | **Finviz**: the terms page **did not load** (finviz.com/terms.ashx → 404) | unverified | unverified | unverified | Disallows `/chart`, `/screener?*`, `/api/v1/screener-export-csv` | **UNCLEAR** (terms not read). Robots already blocks the data-export paths |
+| 7 | **Nasdaq.com**: https://www.nasdaq.com/legal [search extract; /terms-of-use → 404] | "Not access or use the Service, or any process, whether automated or manual, to capture data or content from the Service…" | — | "…or circumvent any mechanisms for preventing the unauthorized reproduction or distribution" | Disallows `/api/v1/*` (and the language variants) | **BANNED** |
+| 8 | **NYSE.com**: **did not load** (nyse.com/terms-of-use → 404; redirected ICE page had no relevant text in my extract) | unverified | unverified | unverified | `User-agent: *` with no relevant disallow seen | **UNCLEAR** |
+| 9 | **CNBC**: https://www.cnbc.com/terms/ | "You may not scrape, repackage, reproduce, republish, recirculate… create derivative works from… the CNBC+ Content or any other data or results from the CNBC+ Services" (CNBC+ section). The Investing Club has the same wording | — | Investing Club: "for your personal and non-commercial use" | Disallows `/appchart/*`, with `Disallow: /` for some agents | **BANNED** |
+| 10 | **Morningstar**: **did not load** (HTTP 202 with an empty body) | unverified | unverified | unverified | Disallows `/api*`, `/api-corporate*` | **UNCLEAR** (terms not read) |
+| 11 | **Zacks**: https://www.zacks.com/terms_of_service.php | — | "you may download or make one print copy… for your own personal, non-commercial use" | "The analysis and data included in Zacks.com may not be recirculated, redistributed or published without prior written consent from Zacks." | Disallows `/stock/quote/pdf_snapshot.php`, `/stock/quote/report.php`, `/stock/stockcompare/...` | **BANNED** |
+| 12 | **Seeking Alpha**: https://about.seekingalpha.com/terms | "Use any robot, spider, site search/retrieval application, or other manual or automatic device or process to download, retrieve, index, 'data mine', 'scrape', 'harvest'…" (prohibited) | "solely for your personal, non-commercial use" | "You may not… republish… distribute, create derivative works… without our prior written permission." | Many `/api/v3/...` disallows | **BANNED** |
+| 13 | **Yahoo Finance / yfinance** (from the earlier survey): https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html | "access or collect data… using any automated means… including… scrapers… for any purpose without our express, prior permission" (prohibited) | — | — | not re-fetched | **BANNED** |
+| 14 | **Stooq** (earlier survey): https://stooq.com/terms.html [search extract] | Scripted access is behind a JavaScript check and a CAPTCHA key | — | 5.3 "Redistribution of data found on the website is not allowed without the consent of Stooq." | not fetched | **BANNED** (redistribution) |
+
+## B. APIs and data vendors
+
+| # | Source and terms URL | Automated access | Storage | Redistribution / derived | Free tier / history | Verdict |
+|---|---|---|---|---|---|---|
+| 15 | **Tiingo**: https://app.tiingo.com/tos/ (updated Oct 6, 2026) | API (that's its purpose) | Starter/free: "may not write, save, archive, back up, or otherwise retain Tiingo Data in any persistent or durable storage". Paid: may persist "solely to the extent permitted by that Paid Plan" | 1.6(c): you "may create, retain, use, and distribute a Derived Product without separate written approval only if" it isn't a substitute and "cannot reasonably be reverse engineered… to… reproduce any underlying Tiingo Data". Permitted examples include "percentage returns… provided that their… presentation do[es] not permit the underlying Tiingo Data to be reconstructed, including through the use of a starting value…" and "aggregated statistics… across multiple instruments… averages, medians… distributions" | Limits and price unverified (JavaScript page). Delisted coverage unverified | **ALLOWED WITH CONDITIONS** (paid plan, aggregates only) |
+| 16 | **Alpha Vantage**: https://www.alphavantage.co/terms_of_service/ | API | not addressed | Not addressed. License "for personal, non-commercial use". "Commercial" includes "employed or have an active affiliation with a… investment bank, money manager…" | https://www.alphavantage.co/support/: "25 API requests per day and unlimited API requests for verified open-source or educational projects". History and delisted coverage unverified | **UNCLEAR**. Ask in writing (draft in setup-checklist.md) |
+| 17 | **Twelve Data**: https://twelvedata.com/terms (updated Jan 1, 2026) | API. 2.3(h): may not "Use automated tools to exceed API Rate Limits" | 2.2(a): "Access, receive, process, and store Data solely for Internal Use". 2.3(g): no storing "beyond permitted timeframes specified in the Documentation" | 2.2(c): "Create Derived Data that cannot be reverse-engineered to recreate the original Data". 2.2(e): "Redistribute or provide external display of Data only if and as expressly authorized by a Redistribution Rights Add-On". "Redistribution" is defined as "any publication… of Data to third parties". Whether derived data counts as "Data" isn't stated | Free-tier limits unverified | **UNCLEAR** (leaning permissive for non-reversible aggregates). Ask in writing |
+| 18 | **Massive (formerly Polygon)** (earlier survey): https://massive.com/legal/market-data-terms-of-service | API | — | Bans distributing "any data, charts, analytics, research, or other works based on… or derived from the Market Data ('Derived Works')" | "5 API Calls / Minute", "2 Years Historical Data" (polygon.io/pricing) | **BANNED** (derived) |
+| 19 | **Financial Modeling Prep**: https://site.financialmodelingprep.com/terms-of-service | API | "may not copy or download any content from the Services except with the prior written approval of FMP" | "may not distribute, publicly perform or display… publish… create derivative works from…". 2.2.2: "prohibited from showcasing FMP Services or Data on platforms including… websites, blogs…" | unverified | **BANNED** |
+| 20 | **EOD Historical Data (EODHD)**: https://eodhd.com/financial-apis/terms-conditions | API. Robots disallows `/api/` for crawlers | "Non-Professional Users are permitted to store, manipulate, and analyze the data for private, non-commercial purposes" | Prohibited from "Selling, reselling, retransmitting, redistributing, displaying, or granting access to the Information… whether in its original or repackaged" form | Has a delisted-stocks product (per the site menu); limits unverified | **BANNED** for publishing. Private analysis only |
+| 21 | **Finnhub**: https://finnhub.io/terms-of-service | API | "we can store the query in log files" (about their own logging) | "You hereby agree to not redistribute or share access to data **or derived results from the data** obtained from Finnhub… without written approval" | unverified | **BANNED** |
+| 22 | **Marketstack (APILayer)**: https://marketstack.com/agreement (the /terms page redirected to an Idera legal page with no relevant text) | API | not found in my extract | No redistribution or derived clause found in my extract | Free: 100 requests/month, end-of-day, about 1 year of history [search extract of marketstack.com/pricing, unverified] | **UNCLEAR**. The 1-year history is too short for 2019–2025 anyway |
+| 23 | **Nasdaq Data Link** (earlier survey): the terms PDF | API | "internal business purposes only" | Derived Data "can only be used for internal business purposes except… upon Provider's prior written approval" | unverified | **BANNED** without approval |
+| 24 | **Alpaca**: https://files.alpaca.markets/disclosures/library/TermsAndConditions.pdf | API | not addressed | "Content is provided exclusively for personal and noncommercial access and use. No part of the Service or Content may be copied, reproduced, republished… publicly displayed… for publication or distribution… without Alpaca's express prior written consent." Making Content available to others through "your own application" requires "30 days advance written notice". Derived results aren't mentioned | Basic is free: "IEX (free)" and "Data older than 15 minutes is accessible on all feeds" (alpaca.markets/learn). History depth unverified | **UNCLEAR** (derived). Needs an Alpaca account |
+| 25 | **Interactive Brokers**: https://ndcdyn.interactivebrokers.com/Universal/servlet/Registration_v2.formSampleView?file=IBISAgreement.html [search extract; the IB page I tried returned 404] | broker API | — | 3: "Subscriber agrees not to reproduce, distribute, sell or commercially exploit the Software or Data in any manner without the written consent of IB and/or the Data Supplier." | Needs a funded account (unverified details) | **BANNED** without consent |
+| 26 | **Schwab Trader API**: the developer terms are login-gated (developer.schwab.com/terms-of-use loaded but had no relevant text). Schwab addendum: https://www.schwab.com/legal/electronic-services-agreement-online [search extract] | broker API | — | Nonprofessional: "receive Information solely for your personal, non-business use". A third-party snapshot of Schwab's terms quotes "You will not redistribute or facilitate the redistribution of Market Information" (unverified on the primary page) | Needs a brokerage account | **BANNED** (redistribution); derived unclear |
+| 27 | **IEX Cloud** | — | — | — | **Shut down August 31, 2024** (Tiingo blog, Databento blog, WatersTechnology). A successor site exists at iexcloud.org; its terms were not read | **N/A** |
+
+## C. Public and open sources
+
+| # | Source | Finding | Verdict |
+|---|---|---|---|
+| 28 | **SEC EDGAR** | Has filings and offer prices (424B4), but **no daily trading prices** | Offer price only |
+| 29 | **FRED**: https://fred.stlouisfed.org/docs/api/terms_of_use.html; series https://fred.stlouisfed.org/series/SP500 | **No individual stocks** (index series only). SP500 notes: "10 years of daily history" and "Reproduction of S&P 500 in any form is prohibited except with the prior written permission of S&P Dow Jones Indices LLC". The API terms say: "Before using data series owned by third parties for anything other than your own personal use, you must contact the data owner" | **Not usable** for IPO returns. A market benchmark would need S&P's permission to publish |
+| 30 | **Wikipedia / Wikidata** | A Wikidata property search for "share price" and "stock price" returned **no properties**. No daily price data was found | **Not available** |
+| 31 | **Kaggle "Huge Stock Market Dataset"** (Boris Marjanovic): https://www.kaggle.com/datasets/borismarjanovic/price-volume-data-for-all-us-stocks-etfs [search extract] | Labelled "CC0: Public Domain". The author says "This dataset belongs to me". "Last updated 11/10/2017". **The original data provider is not stated, so the license can't be traced to the source**, and the data **ends in 2017** anyway | **Not usable** (out of range, and provenance untraceable) |
+| 32 | **Other Kaggle stock datasets** | Not surveyed one by one. Many state that they were built with yfinance/Yahoo, which would inherit Yahoo's ban (unverified per dataset) | **UNCLEAR → treat as unusable unless provenance is traced** |
+
+---
+
+## Source policy
+Early exploratory checks used a secondary public price source. Its data is not used in any published output.
+
+**Policy:**
+- Published artifacts cite SEC EDGAR only; the early exploratory `year_source` column is superseded by the EDGAR universe.
+- Re-do the offer-price cross-check against the 424B4 text alone, which the EDGAR pipeline already does.
+- Don't fetch that site again.
+
+## What this means for the project
+- Plan v3 stands: **offer price from SEC; daily prices from Tiingo (paid) or Alpha Vantage / Twelve Data (only after a written OK).** Publish aggregates only.
+- Send two permission emails, to Alpha Vantage (draft already in setup-checklist.md) and Twelve Data (same text, different name). Then pick the first one that says yes in writing. If neither does, use Tiingo paid for one month (price unverified).
