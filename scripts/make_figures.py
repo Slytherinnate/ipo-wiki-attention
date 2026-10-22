@@ -30,12 +30,16 @@ ax.errorbar(m.coef * k, y, xerr=[(m.coef - m.ci_low) * k, (m.ci_high - m.coef) *
 ax.axvline(0, c='grey', ls='--'); ax.set_yticks(y, lab)
 ax.set(xlabel='Effect of doubling pre-IPO views on log(1+return), ×100 (≈ %), 95% CI', title='Confirmatory OLS, HC3 SEs\n(controls: year FE, foreign issuer, log offer price)')
 fig.tight_layout(); fig.savefig('figures/coef_plot.png', dpi=150)
-r = pd.read_csv(f'{P}/pop_vs_post_views.csv'); r = r[r.include_no_article]
-fig, ax = plt.subplots(figsize=(7, 4.5)); w = .27
-for i, (c, l) in enumerate((('median_daily_views_pre', 'Before (daily avg, −30..−1)'), ('median_daily_views_day0', 'IPO day'), ('median_daily_views_post', 'After (daily avg, +1..+30)'))):
-    ax.bar(r.pop_quintile + (i-1)*w, r[c], w, label=l)
-ax.set_yscale('log')
-ax.set(xlabel='First-day return quintile (1 = weakest pop)', ylabel='Median daily views (log)', title='Does the pop drive attention? Views before vs after, by pop size'); ax.legend()
+r = pd.read_csv(f'{P}/pop_vs_post_views.csv'); r = r[r.include_no_article].sort_values('pop_quintile')
+fig, ax = plt.subplots(figsize=(8, 4.6))
+chg = (r.median_post_to_pre_ratio - 1) * 100
+labs = [f"{'Fell' if v < 0 else 'Rose'} {abs(v)*100:.0f}%\n({int(n)} IPOs)" for v, n in zip(r.median_first_day_return, r.n)]
+bars = ax.bar(range(len(r)), chg, color=plt.cm.Blues(np.linspace(.35, .9, len(r))))
+for b_, v in zip(bars, chg): ax.text(b_.get_x() + b_.get_width()/2, v + .6, f'+{v:.0f}%', ha='center', fontsize=10, fontweight='bold')
+ax.set_xticks(range(len(r)), labs, fontsize=9); ax.set_ylim(0, chg.max() * 1.2)
+ax.set_xlabel('Typical first-day price move, IPOs sorted into five equal groups (weakest to biggest)')
+ax.set_ylabel('Change in daily Wikipedia views\n(month after vs month before)')
+ax.set_title('Bigger first-day jumps leave companies with more lasting attention\nIPO day itself excluded; medians per group', fontsize=10.5)
 fig.tight_layout(); fig.savefig('figures/reverse_pop_attention.png', dpi=150)
 z = pd.read_csv(f'{P}/market_cap_tiers.csv'); z = z[z.include_no_article & (z.grouping == 'tier') & ~z.suppressed]
 order = ['micro (<$0.3B)', 'small ($0.3-2B)', 'mid ($2-10B)', 'large (>$10B)']; z = z.set_index('group').loc[[o for o in order if o in set(z.group)]]
