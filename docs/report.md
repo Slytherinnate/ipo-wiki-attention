@@ -102,6 +102,20 @@ IPO market cap was defined as offer price × shares outstanding immediately afte
 
 Returns are roughly flat above micro-cap. The micro tier is small and noisy.
 
+### 4.6 Outlier handling (post-hoc robustness)
+
+Added after the main results, so treat it as exploratory. The confirmatory model compresses extreme returns with log(1 + return). Dropping extreme firms instead gives the following (first-day return, Spec A controls, HC3):
+
+| Outlier handling | n | Effect per doubling of views | p |
+|---|---|---|---|
+| log(1 + pop), confirmatory | 286 | +0.88% | 0.042 |
+| Raw pop, no adjustment | 286 | +1.63% | 0.017 |
+| Raw pop, drop top/bottom 1% | 280 | +0.95% | 0.070 |
+| Raw pop, drop top/bottom 5% | 256 | +0.52% | 0.249 |
+| Raw pop, drop 1.5×IQR outliers (17 firms, all pops above ~110%) | 269 | +0.53% | 0.255 |
+
+The sign is positive under every choice, but the effect roughly halves and loses significance once the largest first-day pops are removed. The attention effect is concentrated in a small group of high-attention IPOs with very large pops. That is consistent with an attention-driven demand story, but it also means the headline estimate rests on relatively few firms.
+
 ## 5. Limitations
 
 - **Survivorship and matching.** Only IPOs with a confirmed Wikipedia article and usable price data are analysed: 306 of 1,410 operating-company IPOs. Firms with no findable article (the most obscure ones) are absent by construction.

@@ -72,6 +72,8 @@ tests/          public-data and app tests
 
 ## Limitations (short version)
 
+- **The effect is concentrated in the biggest pops.** Dropping outliers instead of log-compressing them shrinks the effect to about +0.5% per doubling (p ≈ 0.25). See report §4.6.
+
 - Only IPOs with a confirmed Wikipedia match and usable prices are included (306 of 1,410 operating-company IPOs), so obscure firms are under-represented.
 - For 20 firms the vendor's first close equals the offer price exactly, which looks like a placeholder; their first-day return is treated as missing.
 - 48 firms had no article before the IPO. The main spec counts them as zero attention (with a dummy); the robustness spec drops them.
