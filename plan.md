@@ -559,3 +559,5 @@ Lead/lag changepoint work is trimmed to a single event-study chart inside Modeli
   - Decision rule: the attention coefficient counts as confirmed only if p < 0.05 in Spec A and has the same sign in Spec B. Each outcome is reported separately; there is no multiple-comparison adjustment across the 2 outcomes × 2 specs, and that is stated.
 - 2026-10-22: Caleb approved the pre-specified decision rule (Spec A p<0.05 + Spec B same sign). Result: first-day passes (marginal, +0.9%/doubling, ~1% R2); day-30 null. Next: viz (~4 h).
 - 2026-10-22: Viz done (Streamlit app, 7 pages incl. post-hoc Company size; public aggregates n>=15; all views charts on daily-average basis). Next: write-up (~3.5 h), then repo/GitHub setup.
+
+- 2026-10-22: Shipped. Pushed to github.com/Slytherinnate/ipo-wiki-attention (commit 5660c42). Streamlit deploy skipped; GitHub is the home.
