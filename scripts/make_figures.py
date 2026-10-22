@@ -2,12 +2,20 @@
 import pandas as pd, numpy as np, matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt, os
 P = 'data/public'; os.makedirs('figures', exist_ok=True)
 c = pd.read_csv(f'{P}/attention_curve.csv'); c = c[~c.suppressed]
-fig, ax = plt.subplots(figsize=(9, 4.5))
-for g, d in c[c.include_no_article & (c.dimension.isin(['All', 'article']))].groupby('group'):
-    ax.plot(d.rel_day, d.median_views, label=f'{g} (n={int(d.n.iloc[0])})', lw=2.2 if g == 'All' else 1.2)
-ax.axvline(0, ls='--', c='grey'); ax.set_yscale('symlog', linthresh=10); ax.set_ylim(bottom=0)
-ax.set(xlabel='Days from first trading day', ylabel='Median daily Wikipedia views', title='Wikipedia attention around IPO day (median across firms)')
-ax.legend(fontsize=8); fig.tight_layout(); fig.savefig('figures/attention_curve.png', dpi=150)
+fig, ax = plt.subplots(figsize=(9, 4.8))
+ax.axvspan(-30, 0, color='tab:blue', alpha=0.08, label='Attention window used in the model (30 days before IPO)')
+cc = c[c.include_no_article]
+for g, col, lw in [('All', 'tab:blue', 2.2), ('Article with pre-IPO views', 'tab:orange', 1.4)]:
+    d = cc[cc.group == g].sort_values('rel_day')
+    sm = d.median_views.rolling(7, center=True, min_periods=1).median()
+    sm[d.rel_day.abs().values <= 3] = d.median_views[d.rel_day.abs().values <= 3]  # keep the IPO spike unsmoothed
+    lab = 'All firms' if g == 'All' else 'Firms with a pre-IPO article'
+    ax.plot(d.rel_day, sm, c=col, lw=lw, label=f'{lab} (n={int(d.n.iloc[0])})')
+ax.axvline(0, ls='--', c='grey'); ax.set_yscale('log')
+ax.set(xlabel='Days from first trading day (0 = IPO day)', ylabel='Median daily Wikipedia views (log scale)')
+ax.set_title('Wikipedia attention around IPO day\nmedian views per day across firms, 7-day rolling median (IPO week unsmoothed)', fontsize=10)
+fig.text(0.01, 0.01, 'The 48 firms with no article before the IPO sit at 0 views/day and cannot be drawn on a log scale; they are included in "All firms".', fontsize=7.5, color='dimgrey')
+ax.legend(fontsize=8, loc='upper left'); fig.tight_layout(rect=(0, 0.04, 1, 1)); fig.savefig('figures/attention_curve.png', dpi=150)
 b = pd.read_csv(f'{P}/attention_bins.csv'); b = b[b.include_no_article & (b.bins == 5)]
 fig, ax = plt.subplots(figsize=(7, 4.5))
 for o, d in b.groupby('outcome'):
