@@ -31,16 +31,22 @@ ax.axvline(0, c='grey', ls='--'); ax.set_yticks(y, lab)
 ax.set(xlabel='Effect of doubling pre-IPO views on log(1+return), ×100 (≈ %), 95% CI', title='Confirmatory OLS, HC3 SEs\n(controls: year FE, foreign issuer, log offer price)')
 fig.tight_layout(); fig.savefig('figures/coef_plot.png', dpi=150)
 r = pd.read_csv(f'{P}/pop_vs_post_views.csv'); r = r[r.include_no_article].sort_values('pop_quintile')
-fig, ax = plt.subplots(figsize=(8, 4.6))
-chg = (r.median_post_to_pre_ratio - 1) * 100
-labs = [f"{'Fell' if v < 0 else 'Rose'} {abs(v)*100:.0f}%\n({int(n)} IPOs)" for v, n in zip(r.median_first_day_return, r.n)]
-bars = ax.bar(range(len(r)), chg, color=plt.cm.Blues(np.linspace(.35, .9, len(r))))
-for b_, v in zip(bars, chg): ax.text(b_.get_x() + b_.get_width()/2, v + .6, f'+{v:.0f}%', ha='center', fontsize=10, fontweight='bold')
-ax.set_xticks(range(len(r)), labs, fontsize=9); ax.set_ylim(0, chg.max() * 1.2)
-ax.set_xlabel('Typical first-day price move, IPOs sorted into five equal groups (weakest to biggest)')
-ax.set_ylabel('Change in daily Wikipedia views\n(month after vs month before)')
-ax.set_title('Bigger first-day jumps leave companies with more lasting attention\nIPO day itself excluded; medians per group', fontsize=10.5)
-fig.tight_layout(); fig.savefig('figures/reverse_pop_attention.png', dpi=150)
+fig, (a1, a2) = plt.subplots(2, 1, figsize=(8, 6.4), sharex=True, gridspec_kw={'hspace': .35})
+x = np.arange(len(r)); cols = plt.cm.Blues(np.linspace(.35, .9, len(r)))
+chg = (r.median_post_to_pre_ratio - 1) * 100; pop = r.median_first_day_return * 100
+a1.bar(x, chg, color=cols)
+for xi, v in zip(x, chg): a1.text(xi, v + .8, f'+{v:.0f}%', ha='center', fontsize=10, fontweight='bold')
+a1.set_ylim(0, chg.max() * 1.25); a1.set_ylabel('Change in daily\nreaders (%)')
+a1.set_title('Change in daily Wikipedia readers: month after the IPO vs month before', fontsize=10)
+a2.bar(x, pop, color=cols); a2.axhline(0, c='k', lw=.8)
+for xi, v in zip(x, pop): a2.text(xi, v + (2 if v >= 0 else -6), f'{v:+.0f}%', ha='center', fontsize=10, fontweight='bold')
+a2.set_ylim(min(pop.min() * 1.8, -5), pop.max() * 1.2); a2.set_ylabel('Stock price move\non day one (%)')
+a2.set_title('Stock price move on IPO day (closing price vs IPO price)', fontsize=10)
+a2.set_xticks(x, [f'Group {i+1}\n{int(n)} IPOs' for i, n in enumerate(r.n)], fontsize=9)
+a2.set_xlabel('IPOs sorted into five equal groups by day-one stock move (smallest to biggest)')
+fig.suptitle('The bigger the day-one jump, the more people kept reading about the company', fontsize=11.5, fontweight='bold')
+fig.text(.01, -.03, 'Medians per group. IPO day excluded from the readership comparison.', fontsize=7.5, color='dimgrey')
+fig.savefig('figures/reverse_pop_attention.png', dpi=150, bbox_inches='tight')
 z = pd.read_csv(f'{P}/market_cap_tiers.csv'); z = z[z.include_no_article & (z.grouping == 'tier') & ~z.suppressed]
 order = ['micro (<$0.3B)', 'small ($0.3-2B)', 'mid ($2-10B)', 'large (>$10B)']; z = z.set_index('group').loc[[o for o in order if o in set(z.group)]]
 fig, axs = plt.subplots(1, 2, figsize=(12, 4.5)); x = np.arange(len(z)); w = .27
