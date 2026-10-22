@@ -49,10 +49,19 @@ fig.text(.01, -.03, 'Medians per group. IPO day excluded from the readership com
 fig.savefig('figures/reverse_pop_attention.png', dpi=150, bbox_inches='tight')
 z = pd.read_csv(f'{P}/market_cap_tiers.csv'); z = z[z.include_no_article & (z.grouping == 'tier') & ~z.suppressed]
 order = ['micro (<$0.3B)', 'small ($0.3-2B)', 'mid ($2-10B)', 'large (>$10B)']; z = z.set_index('group').loc[[o for o in order if o in set(z.group)]]
-fig, axs = plt.subplots(1, 2, figsize=(12, 4.5)); x = np.arange(len(z)); w = .27
-for i, (c, l) in enumerate((('median_daily_views_pre', 'Before (daily avg, −30..−1)'), ('median_daily_views_day0', 'IPO day'), ('median_daily_views_post', 'After (daily avg, +1..+30)'))): axs[0].bar(x + (i-1)*w, z[c], w, label=l)
-axs[0].set_yscale('log'); axs[0].set_xticks(x, [f'{g}\nn={int(n)}' for g, n in zip(z.index, z.n)], fontsize=8); axs[0].set(ylabel='Median daily views (log)', title='Attention by IPO size tier'); axs[0].legend(fontsize=8)
-for i, (c, l) in enumerate((('median_first_day_return', 'First-day'), ('median_day30_return', 'Day-30'))): axs[1].bar(x + (i-.5)*.38, z[c]*100, .38, label=l)
-axs[1].set_xticks(x, z.index, fontsize=8); axs[1].set(ylabel='Median return (%)', title='Returns by IPO size tier'); axs[1].legend(fontsize=8)
-fig.suptitle('Exploratory (post-hoc): IPO market cap = offer price x post-offering shares (SEC 424B4)', fontsize=10); fig.tight_layout(); fig.savefig('figures/size_tiers.png', dpi=150)
+nice = {'micro (<$0.3B)': 'Micro\nunder \\$300M', 'small ($0.3-2B)': 'Small\n\\$300M to \\$2B', 'mid ($2-10B)': 'Mid\n\\$2B to \\$10B', 'large (>$10B)': 'Large\nover \\$10B'}
+fig, (a1, a2) = plt.subplots(2, 1, figsize=(8, 6.6), sharex=True, gridspec_kw={'hspace': .4}); x = np.arange(len(z))
+v = z.median_daily_views_pre; a1.bar(x, v, color=plt.cm.Blues(np.linspace(.35, .9, len(z))))
+for xi, val in zip(x, v): a1.text(xi, val + v.max() * .02, f'{val:,.0f}', ha='center', fontsize=10, fontweight='bold')
+a1.set_ylim(0, v.max() * 1.18); a1.set_ylabel('Daily page views')
+a1.set_title('How many people read about the company each day in the month before its IPO', fontsize=10)
+r1 = z.median_first_day_return * 100; a2.bar(x, r1, color=plt.cm.Oranges(np.linspace(.35, .9, len(z))))
+for xi, val in zip(x, r1): a2.text(xi, val + .6, f'+{val:.0f}%', ha='center', fontsize=10, fontweight='bold')
+a2.set_ylim(0, r1.max() * 1.22); a2.set_ylabel('Stock price move\non day one (%)')
+a2.set_title('Stock price move on IPO day (closing price vs IPO price)', fontsize=10)
+a2.set_xticks(x, [f'{nice[g]}\n({int(n)} IPOs)' for g, n in zip(z.index, z.n)], fontsize=9)
+a2.set_xlabel('Company value at IPO')
+fig.suptitle('Bigger companies get far more attention, but not bigger first-day jumps', fontsize=11.5, fontweight='bold')
+fig.text(.01, -.07, 'Company value = IPO share price x shares outstanding after the IPO, from each company\'s prospectus filed with the SEC.\nMedians per group. Size was examined after the main analysis (exploratory).', fontsize=7.5, color='dimgrey')
+fig.savefig('figures/size_tiers.png', dpi=150, bbox_inches='tight')
 print(os.listdir('figures'))
