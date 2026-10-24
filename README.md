@@ -77,6 +77,8 @@ tests/          public-data and app tests
 - Only IPOs with a confirmed Wikipedia match and usable prices are included (294 of 1,410 operating-company IPOs), so obscure firms are under-represented.
 - For a few firms (fewer than 15) the vendor's first close equals the offer price exactly, which looks like a placeholder; their first-day return is treated as missing.
 - First-trade dates come from SEC filings only. Where SEC data gives no date, the return is left missing rather than dated from price data.
+- **One judgment call moves the headline.** A first close under 20% of the offer price is treated as bad data (almost surely a ticker now held by another company), which drops one firm, Sunnova. Keeping Sunnova in moves the first-day p-value from 0.032 to 0.070, above the 0.05 bar.
+- Some IPOs price and trade on the same day, so a few SEC-derived first-trade dates may really be the second trading day. SEC data can't settle this, so those dates are kept as derived and no firm is dropped for it.
 - 49 firms had no article before the IPO. The main spec counts them as zero attention (with a dummy); the robustness spec drops them.
 - Correlation, not causation. The sector and size analyses are exploratory.
 
