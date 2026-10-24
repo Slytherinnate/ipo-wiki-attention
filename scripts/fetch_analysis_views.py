@@ -2,13 +2,16 @@
 (first MAX_REDIRECTS) summed; plus explicit '[bot] old title: X' from worksheet notes.
 Window anchor-120..anchor+60, missing days = 0. Uses match_all rate limiter (3 req/s, UA) and
 data/cache/pv. Cache ranges end 2025-12-31; titles needing later days are refetched to 2026-10-20.
-Output data/processed/analysis_views/<CIK>.csv + analysis_views_meta.csv."""
+Output data/processed/analysis_views/<CIK>.csv + analysis_views_meta.csv.
+Optional args: CIKs to rebuild only those rows (meta rows for other CIKs are kept)."""
 import os,sys,re,json,csv,datetime as dt
 from collections import defaultdict
 from urllib.parse import quote
 sys.path.insert(0,'scripts');import match_all as M, check_titles_v2 as v2
 import pandas as pd,openpyxl,warnings;warnings.filterwarnings('ignore')
 s=pd.read_csv('data/processed/analysis_set.csv',dtype=str)
+ONLY=set(sys.argv[1:])
+if ONLY: s=s[s.cik.isin(ONLY)]
 R=list(openpyxl.load_workbook('data/universe/onedrive_f4.xlsx',read_only=True)['review'].iter_rows(values_only=True))
 notes={str(r[6]):str(r[40] or '') for r in R[1:]}
 OUT='data/processed/analysis_views';os.makedirs(OUT,exist_ok=True)
@@ -44,5 +47,9 @@ for n,r in s.iterrows():
         n_redirects_total=len(info['redirects']),first_data_date=first,
         pre_days_with_data=sum(1 for k,d in zip(range(-120,61),days) if k<0 and d.strftime('%Y%m%d')>=(first or '99'))))
     if n%25==0: print(n,dict(stats),flush=True)
-pd.DataFrame(meta).to_csv('data/processed/analysis_views_meta.csv',index=False)
+new=pd.DataFrame(meta)
+if ONLY:
+    old=pd.read_csv('data/processed/analysis_views_meta.csv',dtype=str)
+    new=pd.concat([old[~old.cik.isin(ONLY)],new.astype(str)],ignore_index=True)
+new.to_csv('data/processed/analysis_views_meta.csv',index=False)
 print('DONE',dict(stats))

@@ -12,10 +12,10 @@ LICENSE RULES (docs/licenses/tiingo-reply-2026-10-20.md):
 Method:
   1. ticker = EDGAR submissions ticker, else the symbol named on the 424B4 cover
      ('under the symbol "XXXX"'), which also covers delisted/acquired companies
-  2. GET /tiingo/daily/<ticker> (meta: name, startDate, endDate, exchange; permaTicker if returned)
+  2. (metadata lookup removed Oct 24 2026: Tiingo no longer judges identity or listing history)
   3. GET /tiingo/daily/<ticker>/prices?startDate=<anchor-7d>&endDate=<anchor+70d>
-  4. checks: first price date == our first_trade_date; meta startDate near the IPO
-     (else possible ticker reuse); meta name shares a word with the legal name
+  4. NO checks against Tiingo (Oct 24 2026): dates, identity and sample come from SEC only;
+     a missing bar on the SEC date means a missing return (see one())
   5. pop = close(day 0)/offer - 1; ret30 = close(trading day 30)/offer - 1, day 0 =
      first trading day. Uses UNADJUSTED close (offer price is unadjusted). If a
      splitFactor != 1 occurs inside the window, unadjusted closes after the split
@@ -23,7 +23,7 @@ Method:
      row is flagged SPLIT_IN_WINDOW. Dividends are ignored (price return).
 Rate limit: 1 request/second (far under Power plan limits), 4 retries with
 backoff on 429/5xx/timeouts. Cache: data/raw/tiingo/{meta,prices}/<ticker>_<start>.json
-Run: python scripts/tiingo_prices.py --test   (5-IPO test)   |  --all  (do not run yet)
+Run: python scripts/tiingo_prices.py --test | --all   [--offline = cached prices only]
 """
 import csv, datetime as dt, html, json, os, re, sys, time
 import requests
@@ -64,10 +64,15 @@ def get(path, params=None):
     raise RuntimeError("Tiingo failed after retries: " + path)
 
 
+OFFLINE = "--offline" in sys.argv   # cache only, never calls the API
+
+
 def cached(kind, name, fn):
     p = os.path.join(RAW, kind, re.sub(r"[^A-Za-z0-9_.-]", "_", name) + ".json")
     if os.path.exists(p):
         return json.load(open(p))
+    if OFFLINE:
+        return None
     data = fn()
     os.makedirs(os.path.dirname(p), exist_ok=True)
     json.dump(data, open(p, "w"))
@@ -95,37 +100,32 @@ def nth_trading_close(prices, i):
 
 
 def one(row):
+    """Returns on the SEC first-trade date only (Oct 24 2026). Tiingo prices are used for returns
+    and nothing else: Tiingo never sets or checks a date, a firm's identity, or who is in the sample.
+    Ticker = EDGAR submissions ticker, else the 424B4 cover symbol. If EDGAR's company_tickers.json
+    assigns that ticker to a different CIK, the ticker was reused: return missing (SEC check).
+    Day 0 = the SEC first_trade_date; no SEC date or no Tiingo bar on that date -> return missing."""
     res = {k: row[k] for k in ("year", "cik", "decision", "legal_name", "sector", "offer_price", "first_trade_date", "first_trade_conf")}
     flags = []
     cov = cover_symbol(row)
     edgar = row["tickers"].split()[0] if row["tickers"] else ""
     tk = edgar or cov
     res.update(edgar_ticker=edgar, cover_ticker=cov, tiingo_ticker=tk)
-    if edgar and cov and edgar.replace(".", "-") != cov.replace(".", "-"):
-        flags.append("TICKER_CHANGED_SINCE_IPO")
     if not tk:
         res["flags"] = "NO_TICKER"; return res
-    meta = cached("meta", tk, lambda: get(f"/{tk}"))
-    if not meta:
-        res["flags"] = " ".join(flags + ["NOT_IN_TIINGO"]); return res
-    res.update(tiingo_name=meta.get("name") or "", tiingo_start=meta.get("startDate", ""),
-               tiingo_end=meta.get("endDate", ""), tiingo_exchange=meta.get("exchangeCode", ""),
-               permaTicker=meta.get("permaTicker", ""))
-    if not (words(meta.get("name") or "") & words(row["legal_name"])):
-        flags.append("NAME_MISMATCH_TICKER_REUSE?")
-    anchor = dt.date.fromisoformat(row["first_trade_date"] or row["filing_date_424b4"])
+    owner = SEC_TICKERS.get(tk.upper())
+    if owner and owner != str(int(row["cik"])):
+        res["flags"] = "SEC_TICKER_REUSE"; return res
+    if not row["first_trade_date"]:
+        res["flags"] = "NO_SEC_FIRST_TRADE_DATE"; return res
+    anchor = dt.date.fromisoformat(row["first_trade_date"])
     s, e = (anchor - dt.timedelta(days=7)).isoformat(), (anchor + dt.timedelta(days=70)).isoformat()
     px = cached("prices", f"{tk}_{s}", lambda: get(f"/{tk}/prices", {"startDate": s, "endDate": e}))
     if not px:
-        res["flags"] = " ".join(flags + ["NO_PRICES_IN_WINDOW"]); return res
-    first = px[0]["date"][:10]
-    res["tiingo_first_date"] = first
-    ms = (meta.get("startDate") or "")[:10]
-    if ms and abs((dt.date.fromisoformat(ms) - anchor).days) > 5:
-        flags.append("META_START_NOT_AT_IPO")   # ticker history starts elsewhere: reuse or prior listing
-    if row["first_trade_date"] and first != row["first_trade_date"]:
-        flags.append("FIRST_DATE_MISMATCH")
-    # split handling inside window
+        res["flags"] = "NO_PRICES_IN_WINDOW"; return res
+    px = [p for p in px if p["date"][:10] >= row["first_trade_date"]]
+    if not px or px[0]["date"][:10] != row["first_trade_date"]:
+        res["flags"] = "NO_BAR_ON_SEC_DATE"; return res
     cum, closes = 1.0, []
     for p in px:
         sf = float(p.get("splitFactor") or 1)
@@ -142,7 +142,11 @@ def one(row):
         flags.append("LT_30_TRADING_DAYS")
     res["n_days_window"] = len(closes)
     res["flags"] = " ".join(dict.fromkeys(flags))
+    res["returns_status"] = "OK"
     return res
+
+
+SEC_TICKERS = {v["ticker"].upper(): str(v["cik_str"]) for v in json.load(open("data/cache/company_tickers.json")).values()}
 
 
 def main(mode):
@@ -171,4 +175,4 @@ def main(mode):
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "--test")
+    main("--all" if "--all" in sys.argv else "--test")

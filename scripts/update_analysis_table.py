@@ -8,6 +8,14 @@ if 'pop_raw' not in t: t['pop_raw']=t['pop']
 t['pop_close_eq_offer']=t.pop_raw.eq(0)&t.usable_day1
 t['pop']=t.pop_raw.mask(t.pop_close_eq_offer)
 t['usable_day1']=t.us_ipo_set&t.has_views&t.returns_status.isin(['OK','OK_DATE_UNCHECKED'])&t['pop'].notna()
+# Implausible day-0 price (Oct 24 2026): a first close below 20% of the offer price is not a real
+# IPO session (in practice a reused ticker now held by another company, which SEC data cannot
+# catch when EDGAR lists no current ticker). Both returns set missing. Price-quality rule like the
+# placeholder rule above; it uses no Tiingo metadata and never changes a date.
+t['pop_implausible']=t.pop_raw.lt(-0.8)
+t.loc[t.pop_implausible,['pop','ret30']]=np.nan
+t['usable_day1']=t.usable_day1&~t.pop_implausible
+t['usable_day30']=t.usable_day30&~t.pop_implausible
 u=t.usable_day30
 for c in ('pop','ret30'):
     lo,hi=t.loc[u,c].quantile([.01,.99])
@@ -27,6 +35,10 @@ for ti in t.title[~t.title.isin(cr)]:
     json.dump(cr,open(fn,'w'))
 t['article_created']=t.title.map(cr)
 t['article_age_days']=(pd.to_datetime(t.anchor_date)-pd.to_datetime(t.article_created)).dt.days
+# pre-IPO article flag and 424B4 market cap (previously added by hand; now in the pipeline, Oct 24 2026)
+t['has_pre_ipo_article']=t.pre_days_with_data.fillna(0).astype(float).gt(0)
+mc=pd.read_csv('data/processed/market_cap.csv',dtype={'cik':str})[['cik','market_cap','cap_flags','shares_out_after']]
+t=t.drop(columns=[c for c in ('market_cap','cap_flags','shares_out_after') if c in t]).merge(mc,on='cik',how='left')
 t.to_parquet('data/processed/analysis_table.parquet',index=False)
 w=t[t.usable_day30]
 print('flagged',t.pop_close_eq_offer.sum(),'usable day1',t.usable_day1.sum(),'day30',t.usable_day30.sum(),'median ret30',repr(w.ret30.median()),'created missing',w.article_created.isna().sum())

@@ -112,8 +112,8 @@ elif page == 'Company size':
     st.title('Company size')
     st.warning('**Exploratory (post-hoc).** Not part of the pre-registered analysis: this was asked after seeing the main results. Treat it as a lead, not a finding.')
     nc = meta.set_index(['key', 'include_no_article']).n
-    st.markdown(f"""**In plain English:** bigger companies get far more Wikipedia attention (median pre-IPO views rise roughly 140× from micro to large caps), but size doesn't track returns, which are about flat above micro-cap (micro caps run lower, but that tier is only ~18 firms, so treat it as noise).
-When size is added as a control, the attention effect on first-day returns gets slightly *stronger*: about **+1.14% per doubling of views (p = 0.016, n = 264)**. That's a post-hoc lead to test properly, not a result.
+    st.markdown(f"""**In plain English:** bigger companies get far more Wikipedia attention (median pre-IPO views rise roughly 140× from micro to large caps), but size doesn't track returns, which are about flat above micro-cap (micro caps run lower, but that tier is only ~17 firms, so treat it as noise).
+When size is added as a control, the attention effect on first-day returns gets slightly *stronger*: about **+1.18% per doubling of views (p = 0.014, n = 258)**. That's a post-hoc lead to test properly, not a result.
 
 Market cap = offer price × shares outstanding right after the offering, from the SEC 424B4 prospectus (no market prices). Available for **{int(nc[('n_with_market_cap', True)])} of {int(nc[('n_usable_day30', True)])}** IPOs. The missing ones are mostly complex multi-class and Up-C structures, so they're **not missing at random**.""")
     if sector != 'All': st.info('Size tiers are shown for all sectors only (per-sector tiers would fall below n=15).')
@@ -144,12 +144,12 @@ else:
 
 **Attention.** Daily human pageviews from the Wikimedia Pageviews API, with the article's redirects and old titles summed. The window runs from 120 days before to 60 days after the first trading day.
 
-**Returns.** First-day return = first close / offer price − 1. Day-30 return = close about 30 days later / offer − 1. Offer prices come from the 424B4. Daily prices are from a licensed vendor (Tiingo). Under its terms only aggregates over at least 15 firms are shown here; no per-company prices or returns are published.
+**Returns.** First-day return = first close / offer price − 1. Day-30 return = close 30 trading days later / offer − 1. The first trading day comes from SEC filings only. Offer prices come from the 424B4. Daily prices are from a licensed vendor (Tiingo). Under its terms only aggregates over at least 15 firms are shown here; no per-company prices or returns are published.
 
 **Limitations.**
 - *Survivorship and matching.* Only IPOs with a Wikipedia article and usable price data are included. Firms that are obscure or have since delisted are under-represented.
-- *Placeholder first-day closes.* For 20 firms the vendor's first close equals the offer price exactly, which is almost certainly a placeholder. Their first-day return is treated as missing; their day-30 return is kept.
-- *Articles created after the IPO.* 48 firms only got a Wikipedia article after listing. The main spec counts them as zero attention (with a dummy); the robustness spec drops them (sidebar toggle).
+- *Placeholder first-day closes.* For a few firms (fewer than 15) the vendor's close on the SEC first-trade date equals the offer price exactly, which is almost certainly a placeholder. Their first-day return is treated as missing; their day-30 return is kept.
+- *Articles created after the IPO.* 49 firms only got a Wikipedia article after listing. The main spec counts them as zero attention (with a dummy); the robustness spec drops them (sidebar toggle).
 - *Correlation, not causation.* Attention, hype and deal quality move together. The controls (year, foreign issuer, offer price) don't remove all of that.
 - *Multiple comparisons.* The confirmatory test was pre-registered. Sector results and the exploratory scan are not, and should be read as leads.
 - *Small groups.* Any group under 15 firms is suppressed everywhere.

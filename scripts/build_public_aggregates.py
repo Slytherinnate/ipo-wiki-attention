@@ -120,5 +120,5 @@ pd.DataFrame([dict(key='n_usable_day30', include_no_article=i, n=len(d)) for i, 
              [dict(key='n_usable_first_day', include_no_article=i, n=int(d['pop'].notna().sum())) for i, d in SETTINGS.items()] +
              [dict(key='n_placeholder_first_day_missing', include_no_article=True, n=int(df.pop_close_eq_offer.sum()))] +
              [dict(key='n_with_market_cap', include_no_article=i, n=int(d.market_cap.notna().sum())) for i, d in SETTINGS.items()]
-             ).assign(suppressed=False).to_csv(f'{OUT}/meta_counts.csv', index=False)
+             ).pipe(lambda m: m.assign(suppressed=m.n < MIN_N, n=m.n.where(m.n >= MIN_N).astype('Int64'))).to_csv(f'{OUT}/meta_counts.csv', index=False)
 print('wrote', sorted(os.listdir(OUT)))
